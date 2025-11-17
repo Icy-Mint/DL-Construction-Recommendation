@@ -1,0 +1,21 @@
+# Synthetic Building Energy Rules Examples
+# NOTE: These are NOT from ASHRAE or any copyrighted standard
+# These are simplified, synthetic examples for demonstration only
+
+# Lighting Rules
+If building type is office and building area is less than 25000 sqft then set lighting power density to 1.0 W/sqft
+
+If building type is retail and building area is greater than 10000 sqft then set lighting power density to 1.5 W/sqft
+
+# HVAC Rules
+If climate zone is 1a or 2a then set cooling COP to 3.5
+
+If building area is greater than 50000 sqft and climate zone is 5a then apply HVAC method high-efficiency
+
+# Envelope Rules
+If climate zone is 6a or 7 then set wall u-factor to 0.05 BTU/hr-sqft-F
+
+If window to wall ratio is greater than 40 percent then set SHGC to 0.25
+
+# Mixed Conditions
+If building type is residential and number of stories is greater than 3 and climate zone is 4a then set heating efficiency to 0.85

@@ -1,0 +1,13 @@
+# Example Building Specification
+# This is a sample input file for the baseline generator
+
+building_type: office
+building_area: 15000  # sqft
+climate_zone: "5a"
+num_stories: 2
+window_to_wall_ratio: 30  # percent
+
+# Additional properties
+construction_type: steel_frame
+occupancy_type: commercial
+year_built: 2020

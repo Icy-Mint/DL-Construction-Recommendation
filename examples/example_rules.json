@@ -1,0 +1,217 @@
+{
+  "version": "1.0",
+  "metadata": {
+    "description": "Synthetic building energy rules for demonstration",
+    "note": "NOT based on ASHRAE or any copyrighted standards",
+    "created": "2025-11-17"
+  },
+  "rules": [
+    {
+      "id": "lighting_001",
+      "name": "Small Office Lighting Power Density",
+      "description": "Lighting power density baseline for small office buildings",
+      "category": "lighting",
+      "priority": 10,
+      "conditions": {
+        "operator": "and",
+        "conditions": [
+          {
+            "field": "building_type",
+            "operator": "equals",
+            "value": "office"
+          },
+          {
+            "field": "building_area",
+            "operator": "less_than",
+            "value": 25000,
+            "unit": "sqft"
+          }
+        ]
+      },
+      "actions": [
+        {
+          "action_type": "set_value",
+          "target": "lighting_power_density",
+          "value": 1.0,
+          "parameters": {
+            "unit": "W/sqft",
+            "applies_to": "interior_lighting"
+          }
+        }
+      ]
+    },
+    {
+      "id": "lighting_002",
+      "name": "Large Retail Lighting Power Density",
+      "description": "Lighting power density baseline for large retail buildings",
+      "category": "lighting",
+      "priority": 10,
+      "conditions": {
+        "operator": "and",
+        "conditions": [
+          {
+            "field": "building_type",
+            "operator": "equals",
+            "value": "retail"
+          },
+          {
+            "field": "building_area",
+            "operator": "greater_than",
+            "value": 10000,
+            "unit": "sqft"
+          }
+        ]
+      },
+      "actions": [
+        {
+          "action_type": "set_value",
+          "target": "lighting_power_density",
+          "value": 1.5,
+          "parameters": {
+            "unit": "W/sqft"
+          }
+        }
+      ]
+    },
+    {
+      "id": "hvac_001",
+      "name": "Hot Climate Cooling Efficiency",
+      "description": "Minimum cooling COP for hot climate zones",
+      "category": "hvac",
+      "priority": 8,
+      "conditions": {
+        "field": "climate_zone",
+        "operator": "in",
+        "value": ["1a", "2a", "1b", "2b"]
+      },
+      "actions": [
+        {
+          "action_type": "set_value",
+          "target": "cooling_cop",
+          "value": 3.5,
+          "parameters": {
+            "unit": "dimensionless",
+            "equipment_type": "air_conditioner"
+          }
+        }
+      ]
+    },
+    {
+      "id": "hvac_002",
+      "name": "Large Building HVAC Method",
+      "description": "Apply high-efficiency HVAC method for large buildings in moderate climates",
+      "category": "hvac",
+      "priority": 5,
+      "conditions": {
+        "operator": "and",
+        "conditions": [
+          {
+            "field": "building_area",
+            "operator": "greater_than",
+            "value": 50000,
+            "unit": "sqft"
+          },
+          {
+            "field": "climate_zone",
+            "operator": "equals",
+            "value": "5a"
+          }
+        ]
+      },
+      "actions": [
+        {
+          "action_type": "apply_method",
+          "target": "hvac_system",
+          "value": "high-efficiency",
+          "parameters": {
+            "method_reference": "synthetic_method_001"
+          }
+        }
+      ]
+    },
+    {
+      "id": "envelope_001",
+      "name": "Cold Climate Wall Insulation",
+      "description": "Wall U-factor requirements for cold climates",
+      "category": "envelope",
+      "priority": 8,
+      "conditions": {
+        "field": "climate_zone",
+        "operator": "in",
+        "value": ["6a", "6b", "7", "8"]
+      },
+      "actions": [
+        {
+          "action_type": "set_value",
+          "target": "wall_u_factor",
+          "value": 0.05,
+          "parameters": {
+            "unit": "BTU/hr-sqft-F",
+            "assembly_type": "mass_wall"
+          }
+        }
+      ]
+    },
+    {
+      "id": "envelope_002",
+      "name": "High WWR Window Performance",
+      "description": "SHGC requirement for high window-to-wall ratio buildings",
+      "category": "envelope",
+      "priority": 7,
+      "conditions": {
+        "field": "window_to_wall_ratio",
+        "operator": "greater_than",
+        "value": 40,
+        "unit": "percent"
+      },
+      "actions": [
+        {
+          "action_type": "set_value",
+          "target": "window_shgc",
+          "value": 0.25,
+          "parameters": {
+            "unit": "dimensionless"
+          }
+        }
+      ]
+    },
+    {
+      "id": "mixed_001",
+      "name": "Multi-Story Residential Heating",
+      "description": "Heating efficiency for multi-story residential in moderate climates",
+      "category": "hvac",
+      "priority": 6,
+      "conditions": {
+        "operator": "and",
+        "conditions": [
+          {
+            "field": "building_type",
+            "operator": "equals",
+            "value": "residential"
+          },
+          {
+            "field": "num_stories",
+            "operator": "greater_than",
+            "value": 3
+          },
+          {
+            "field": "climate_zone",
+            "operator": "equals",
+            "value": "4a"
+          }
+        ]
+      },
+      "actions": [
+        {
+          "action_type": "set_value",
+          "target": "heating_efficiency",
+          "value": 0.85,
+          "parameters": {
+            "unit": "dimensionless",
+            "equipment_type": "furnace"
+          }
+        }
+      ]
+    }
+  ]
+}

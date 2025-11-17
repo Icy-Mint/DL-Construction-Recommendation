@@ -1,0 +1,59 @@
+{
+  "input": {
+    "building_type": "office",
+    "building_area": 15000,
+    "climate_zone": "5a",
+    "num_stories": 2,
+    "window_to_wall_ratio": 30,
+    "construction_type": "steel_frame",
+    "occupancy_type": "commercial",
+    "year_built": 2020
+  },
+  "matched_rules": [
+    {
+      "rule_id": "lighting_001",
+      "rule_name": "Small Office Lighting Power Density",
+      "category": "lighting"
+    }
+  ],
+  "baseline_properties": {
+    "lighting_power_density": 1.0
+  },
+  "evaluation_log": [
+    {
+      "rule_id": "lighting_001",
+      "status": "matched",
+      "message": "Rule 'Small Office Lighting Power Density' matched and applied"
+    },
+    {
+      "rule_id": "lighting_002",
+      "status": "not_matched",
+      "message": "Rule 'Large Retail Lighting Power Density' conditions not met"
+    },
+    {
+      "rule_id": "hvac_001",
+      "status": "not_matched",
+      "message": "Rule 'Hot Climate Cooling Efficiency' conditions not met"
+    },
+    {
+      "rule_id": "envelope_001",
+      "status": "not_matched",
+      "message": "Rule 'Cold Climate Wall Insulation' conditions not met"
+    },
+    {
+      "rule_id": "envelope_002",
+      "status": "not_matched",
+      "message": "Rule 'High WWR Window Performance' conditions not met"
+    },
+    {
+      "rule_id": "mixed_001",
+      "status": "not_matched",
+      "message": "Rule 'Multi-Story Residential Heating' conditions not met"
+    },
+    {
+      "rule_id": "hvac_002",
+      "status": "not_matched",
+      "message": "Rule 'Large Building HVAC Method' conditions not met"
+    }
+  ]
+}
