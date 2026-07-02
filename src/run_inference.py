@@ -36,38 +36,67 @@ def load_model(model_path: str):
     return tokenizer, model, device
 
 
+# Top-level keys that should hold a nested object in this project's rule schema
+# (see dataset_builder.py). The model frequently drops the "{" after these
+# keys (e.g. "inputs":"climate_zone":"5" instead of "inputs":{"climate_zone":"5"),
+# which plain quote/comma fixes can't repair.
+_NESTED_KEYS = ["inputs", "outputs", "units", "notes"]
+
+
 def fix_json_string(json_str: str) -> Optional[str]:
     """
     Attempt to fix common JSON formatting issues.
-    
+
     Args:
         json_str: Potentially malformed JSON string
-    
+
     Returns:
         Fixed JSON string or None if unfixable
     """
     # Remove leading/trailing whitespace
     json_str = json_str.strip()
-    
+
     # Remove markdown code blocks if present
     json_str = re.sub(r'^```json\s*', '', json_str, flags=re.IGNORECASE)
     json_str = re.sub(r'^```\s*', '', json_str, flags=re.IGNORECASE)
     json_str = re.sub(r'```\s*$', '', json_str, flags=re.IGNORECASE)
-    
-    # Try to extract JSON if wrapped in text
+
+    # Ensure outer braces are present (the model sometimes emits the object
+    # body with no braces at all)
+    if not json_str.startswith('{'):
+        json_str = '{' + json_str
+    if not json_str.endswith('}'):
+        json_str = json_str + '}'
+
+    # Try to extract JSON if wrapped in surrounding text
     json_match = re.search(r'\{.*\}', json_str, re.DOTALL)
     if json_match:
         json_str = json_match.group(0)
-    
+
+    # Insert missing "{" after nested-object keys, and close that object
+    # right before the next known top-level key. Only fires when the brace
+    # is actually missing, so well-formed input passes through unchanged.
+    for i, key in enumerate(_NESTED_KEYS):
+        json_str, n_open = re.subn(rf'"{key}"\s*:\s*"', f'"{key}": {{"', json_str)
+        if not n_open:
+            continue
+        next_key = _NESTED_KEYS[i + 1] if i + 1 < len(_NESTED_KEYS) else None
+        if next_key:
+            json_str = re.sub(rf',\s*"{next_key}":', f'}}, "{next_key}":', json_str)
+        else:
+            # "notes" is the last nested object - close it right before the
+            # final outer closing brace
+            json_str = json_str[:-1].rstrip() + '}' + '}'
+
     # Fix common issues
     # Replace single quotes with double quotes (simple cases)
     json_str = re.sub(r"'([^']*)':", r'"\1":', json_str)
     json_str = re.sub(r":\s*'([^']*)'", r': "\1"', json_str)
-    
+
     # Fix trailing commas (remove before closing braces/brackets)
     json_str = re.sub(r',\s*}', '}', json_str)
     json_str = re.sub(r',\s*]', ']', json_str)
-    
+
     return json_str
 
 

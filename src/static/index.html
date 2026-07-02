@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Construction Code Requirement Checker</title>
+<style>
+  body { font-family: system-ui, sans-serif; max-width: 720px; margin: 40px auto; padding: 0 16px; color: #1a1a1a; }
+  h1 { font-size: 1.4rem; }
+  textarea { width: 100%; height: 90px; font-size: 1rem; padding: 10px; box-sizing: border-box; }
+  button { margin-top: 10px; padding: 10px 20px; font-size: 1rem; cursor: pointer; }
+  button:disabled { opacity: 0.5; cursor: default; }
+  .error { color: #b00020; }
+  .hint { color: #666; font-size: 0.9rem; }
+  table { border-collapse: collapse; margin-top: 16px; width: 100%; }
+  th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid #e0e0e0; }
+  th { color: #666; font-weight: 600; font-size: 0.85rem; text-transform: uppercase; }
+  .meta { color: #666; font-size: 0.9rem; margin-top: 16px; }
+  .empty { color: #666; font-style: italic; margin-top: 16px; }
+  pre { background: #f4f4f4; padding: 14px; border-radius: 6px; overflow-x: auto; white-space: pre-wrap; word-break: break-word; }
+</style>
+</head>
+<body>
+  <h1>Construction Code Requirement Checker</h1>
+  <p class="hint">State the requirement as a fact, not a question - e.g. "<em>In climate zone 5, exterior walls of type SteelFramed must not exceed a U-factor of 0.064.</em>" The model was trained on statements like this, not on questions like "what is the U-value for...", so phrasing it as a statement gives much more reliable results.</p>
+
+  <textarea id="input" placeholder="In climate zone 5, exterior walls of type SteelFramed must not exceed a U-factor of 0.064.">In climate zone 5, exterior walls of type SteelFramed must not exceed a U-factor of 0.064.</textarea>
+  <br>
+  <button id="submit">Check</button>
+
+  <div id="result"></div>
+
+  <script>
+    const submitBtn = document.getElementById('submit');
+    const input = document.getElementById('input');
+    const result = document.getElementById('result');
+
+    const FIELD_LABELS = {
+      max_u_value: 'Max U-value',
+      max_f_factor: 'Max F-factor',
+      max_c_factor: 'Max C-factor',
+      max_shgc: 'Max SHGC',
+      min_vt: 'Min VT',
+      min_vt_shgc: 'Min VT/SHGC',
+    };
+
+    function render(data) {
+      if (data.error) {
+        result.innerHTML = `<p class="error">Could not parse a valid rule from the model's output.</p>
+          <pre>${escapeHtml(data.raw_output || '')}</pre>`;
+        return;
+      }
+
+      const entries = Object.entries(data.numeric_requirements || {});
+      let html = `<p class="meta">Climate zone: <strong>${data.climate_zone ?? 'n/a'}</strong> &middot; Rule type: <strong>${data.rule_category ?? 'n/a'}</strong></p>`;
+
+      if (entries.length === 0) {
+        html += `<p class="empty">No numeric requirement found for this input (it may be an assignment-type rule, or the model didn't return one).</p>`;
+      } else {
+        html += `<table><thead><tr><th>Requirement</th><th>Value</th><th>Unit</th></tr></thead><tbody>`;
+        for (const [field, { value, unit }] of entries) {
+          html += `<tr><td>${FIELD_LABELS[field] || field}</td><td>${value}</td><td>${unit ?? ''}</td></tr>`;
+        }
+        html += `</tbody></table>`;
+      }
+      result.innerHTML = html;
+    }
+
+    function escapeHtml(str) {
+      const div = document.createElement('div');
+      div.textContent = str;
+      return div.innerHTML;
+    }
+
+    async function check() {
+      const text = input.value.trim();
+      if (!text) return;
+
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Checking...';
+      result.innerHTML = '<p class="hint">Running inference...</p>';
+
+      try {
+        const res = await fetch('/check', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text })
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          result.innerHTML = `<p class="error">Error: ${escapeHtml(data.detail || res.statusText)}</p>`;
+        } else {
+          render(data);
+        }
+      } catch (err) {
+        result.innerHTML = `<p class="error">Request failed: ${escapeHtml(String(err))}</p>`;
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Check';
+      }
+    }
+
+    submitBtn.addEventListener('click', check);
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) check();
+    });
+  </script>
+</body>
+</html>
